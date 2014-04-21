@@ -17,6 +17,15 @@ ActiveRecord::Schema.define do
       ActiveRecord::Base.connection.create_table(*args, &block)
       ActiveRecord::Base.connection.execute "SET GENERATOR #{args.first}_seq TO 10000"
     end
+  when "PostgreSQL"
+    enable_uuid_ossp!(ActiveRecord::Base.connection)
+    create_table :uuid_parents, id: :uuid, force: true do |t|
+      t.string :name
+    end
+    create_table :uuid_children, id: :uuid, force: true do |t|
+      t.string :name
+      t.uuid :uuid_parent_id
+    end
   end
 
 
@@ -159,6 +168,10 @@ ActiveRecord::Schema.define do
 
   create_table :colnametests, force: true do |t|
     t.integer :references, null: false
+  end
+
+  create_table :columns, force: true do |t|
+    t.references :record
   end
 
   create_table :comments, force: true do |t|
@@ -638,6 +651,8 @@ ActiveRecord::Schema.define do
 
   create_table :students, force: true do |t|
     t.string :name
+    t.boolean :active
+    t.integer :college_id
   end
 
   create_table :subscribers, force: true, id: false do |t|
@@ -671,7 +686,7 @@ ActiveRecord::Schema.define do
   end
 
   create_table :topics, force: true do |t|
-    t.string   :title
+    t.string   :title, limit: 250
     t.string   :author_name
     t.string   :author_email_address
     if mysql_56?
@@ -817,6 +832,8 @@ ActiveRecord::Schema.define do
     t.integer :department_id
   end
 
+  create_table :records, force: true do |t|
+  end
 
   except 'SQLite' do
     # fk_test_has_fk should be before fk_test_has_pk

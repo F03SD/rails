@@ -99,7 +99,7 @@ ruby 2.0.0p353
 ```
 
 If you don't have Ruby installed have a look at
-[ruby-lang.org](https://www.ruby-lang.org/en/downloads/) for possible ways to
+[ruby-lang.org](https://www.ruby-lang.org/en/installation/) for possible ways to
 install Ruby on your platform.
 
 Many popular UNIX-like OSes ship with an acceptable version of SQLite3. Windows
@@ -344,7 +344,7 @@ resource. Here's what `config/routes.rb` should look like after the
 _article resource_ is declared.
 
 ```ruby
-Blog::Application.routes.draw do
+Rails.application.routes.draw do
 
   resources :articles
 
@@ -612,7 +612,7 @@ def create
 end
 ```
 
-The `render` method here is taking a very simple hash with a key of `text` and
+The `render` method here is taking a very simple hash with a key of `plain` and
 value of `params[:article].inspect`. The `params` method is the object which
 represents the parameters (or fields) coming in from the form. The `params`
 method returns an `ActiveSupport::HashWithIndifferentAccess` object, which
@@ -863,7 +863,7 @@ def index
 end
 ```
 
-And then finally, add view for this action, located at
+And then finally, add the view for this action, located at
 `app/views/articles/index.html.erb`:
 
 ```html+erb
@@ -1028,17 +1028,21 @@ something went wrong. To do that, you'll modify
 
 ```html+erb
 <%= form_for :article, url: articles_path do |f| %>
+
   <% if @article.errors.any? %>
-  <div id="error_explanation">
-    <h2><%= pluralize(@article.errors.count, "error") %> prohibited
-      this article from being saved:</h2>
-    <ul>
-    <% @article.errors.full_messages.each do |msg| %>
-      <li><%= msg %></li>
-    <% end %>
-    </ul>
-  </div>
+    <div id="error_explanation">
+      <h2>
+        <%= pluralize(@article.errors.count, "error") %> prohibited
+        this article from being saved:
+      </h2>
+      <ul>
+        <% @article.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
   <% end %>
+
   <p>
     <%= f.label :title %><br>
     <%= f.text_field :title %>
@@ -1052,6 +1056,7 @@ something went wrong. To do that, you'll modify
   <p>
     <%= f.submit %>
   </p>
+
 <% end %>
 
 <%= link_to 'Back', articles_path %>
@@ -1100,17 +1105,21 @@ it look as follows:
 <h1>Editing article</h1>
 
 <%= form_for :article, url: article_path(@article), method: :patch do |f| %>
+
   <% if @article.errors.any? %>
-  <div id="error_explanation">
-    <h2><%= pluralize(@article.errors.count, "error") %> prohibited
-      this article from being saved:</h2>
-    <ul>
-    <% @article.errors.full_messages.each do |msg| %>
-      <li><%= msg %></li>
-    <% end %>
-    </ul>
-  </div>
+    <div id="error_explanation">
+      <h2>
+        <%= pluralize(@article.errors.count, "error") %> prohibited
+        this article from being saved:
+      </h2>
+      <ul>
+        <% @article.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
   <% end %>
+
   <p>
     <%= f.label :title %><br>
     <%= f.text_field :title %>
@@ -1124,6 +1133,7 @@ it look as follows:
   <p>
     <%= f.submit %>
   </p>
+
 <% end %>
 
 <%= link_to 'Back', articles_path %>
@@ -1136,7 +1146,7 @@ The `method: :patch` option tells Rails that we want this form to be submitted
 via the `PATCH` HTTP method which is the HTTP method you're expected to use to
 **update** resources according to the REST protocol.
 
-The first parameter of the `form_tag` can be an object, say, `@article` which would
+The first parameter of `form_for` can be an object, say, `@article` which would
 cause the helper to fill in the form with the fields of the object. Passing in a
 symbol (`:article`) with the same name as the instance variable (`@article`) also
 automagically leads to the same behavior. This is what is happening here. More details
@@ -1187,14 +1197,14 @@ it appear next to the "Show" link:
     <th colspan="2"></th>
   </tr>
 
-<% @articles.each do |article| %>
-  <tr>
-    <td><%= article.title %></td>
-    <td><%= article.text %></td>
-    <td><%= link_to 'Show', article_path(article) %></td>
-    <td><%= link_to 'Edit', edit_article_path(article) %></td>
-  </tr>
-<% end %>
+  <% @articles.each do |article| %>
+    <tr>
+      <td><%= article.title %></td>
+      <td><%= article.text %></td>
+      <td><%= link_to 'Show', article_path(article) %></td>
+      <td><%= link_to 'Edit', edit_article_path(article) %></td>
+    </tr>
+  <% end %>
 </table>
 ```
 
@@ -1228,17 +1238,21 @@ content:
 
 ```html+erb
 <%= form_for @article do |f| %>
+
   <% if @article.errors.any? %>
-  <div id="error_explanation">
-    <h2><%= pluralize(@article.errors.count, "error") %> prohibited
-      this article from being saved:</h2>
-    <ul>
-    <% @article.errors.full_messages.each do |msg| %>
-      <li><%= msg %></li>
-    <% end %>
-    </ul>
-  </div>
+    <div id="error_explanation">
+      <h2>
+        <%= pluralize(@article.errors.count, "error") %> prohibited
+        this article from being saved:
+      </h2>
+      <ul>
+        <% @article.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
   <% end %>
+
   <p>
     <%= f.label :title %><br>
     <%= f.text_field :title %>
@@ -1252,6 +1266,7 @@ content:
   <p>
     <%= f.submit %>
   </p>
+
 <% end %>
 ```
 
@@ -1333,16 +1348,17 @@ together.
     <th colspan="3"></th>
   </tr>
 
-<% @articles.each do |article| %>
-  <tr>
-    <td><%= article.title %></td>
-    <td><%= article.text %></td>
-    <td><%= link_to 'Show', article_path(article) %></td>
-    <td><%= link_to 'Edit', edit_article_path(article) %></td>
-    <td><%= link_to 'Destroy', article_path(article),
-                    method: :delete, data: { confirm: 'Are you sure?' } %></td>
-  </tr>
-<% end %>
+  <% @articles.each do |article| %>
+    <tr>
+      <td><%= article.title %></td>
+      <td><%= article.text %></td>
+      <td><%= link_to 'Show', article_path(article) %></td>
+      <td><%= link_to 'Edit', edit_article_path(article) %></td>
+      <td><%= link_to 'Destroy', article_path(article),
+              method: :delete,
+              data: { confirm: 'Are you sure?' } %></td>
+    </tr>
+  <% end %>
 </table>
 ```
 
@@ -1552,8 +1568,8 @@ So first, we'll wire up the Article show template
   </p>
 <% end %>
 
-<%= link_to 'Back', articles_path %>
-| <%= link_to 'Edit', edit_article_path(@article) %>
+<%= link_to 'Back', articles_path %> |
+<%= link_to 'Edit', edit_article_path(@article) %>
 ```
 
 This adds a form on the `Article` show page that creates a new comment by

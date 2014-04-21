@@ -1420,7 +1420,7 @@ class FormHelperTest < ActionView::TestCase
     expected = whole_form("/posts", "new_post", "new_post") do
       "<input checked='checked' id='post_1_tag_ids_1' name='post[1][tag_ids][]' type='checkbox' value='1' />" +
       "<label for='post_1_tag_ids_1'>Tag 1</label>" +
-      "<input name='post[tag_ids][]' type='hidden' value='' />"
+      "<input name='post[1][tag_ids][]' type='hidden' value='' />"
     end
 
     assert_dom_equal expected, output_buffer
@@ -3020,12 +3020,13 @@ class FormHelperTest < ActionView::TestCase
   protected
 
   def hidden_fields(method = nil)
-    txt =  %{<div style="display:none">}
-    txt << %{<input name="utf8" type="hidden" value="&#x2713;" />}
+    txt = %{<input name="utf8" type="hidden" value="&#x2713;" />}
+
     if method && !%w(get post).include?(method.to_s)
       txt << %{<input name="_method" type="hidden" value="#{method}" />}
     end
-    txt << %{</div>}
+
+    txt
   end
 
   def form_text(action = "/", id = nil, html_class = nil, remote = nil, multipart = nil, method = nil)

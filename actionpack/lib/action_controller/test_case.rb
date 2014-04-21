@@ -17,8 +17,9 @@ module ActionController
       @_templates = Hash.new(0)
       @_layouts = Hash.new(0)
       @_files = Hash.new(0)
+      @_subscribers = []
 
-      ActiveSupport::Notifications.subscribe("render_template.action_view") do |_name, _start, _finish, _id, payload|
+      @_subscribers << ActiveSupport::Notifications.subscribe("render_template.action_view") do |_name, _start, _finish, _id, payload|
         path = payload[:layout]
         if path
           @_layouts[path] += 1
@@ -28,7 +29,7 @@ module ActionController
         end
       end
 
-      ActiveSupport::Notifications.subscribe("!render_template.action_view") do |_name, _start, _finish, _id, payload|
+      @_subscribers << ActiveSupport::Notifications.subscribe("!render_template.action_view") do |_name, _start, _finish, _id, payload|
         path = payload[:virtual_path]
         next unless path
         partial = path =~ /^.*\/_[^\/]*$/
@@ -41,7 +42,7 @@ module ActionController
         @_templates[path] += 1
       end
 
-      ActiveSupport::Notifications.subscribe("!render_template.action_view") do |_name, _start, _finish, _id, payload|
+      @_subscribers << ActiveSupport::Notifications.subscribe("!render_template.action_view") do |_name, _start, _finish, _id, payload|
         next if payload[:virtual_path] # files don't have virtual path
 
         path = payload[:identifier]
@@ -53,8 +54,9 @@ module ActionController
     end
 
     def teardown_subscriptions
-      ActiveSupport::Notifications.unsubscribe("render_template.action_view")
-      ActiveSupport::Notifications.unsubscribe("!render_template.action_view")
+      @_subscribers.each do |subscriber|
+        ActiveSupport::Notifications.unsubscribe(subscriber)
+      end
     end
 
     def process(*args)
@@ -486,8 +488,8 @@ module ActionController
       # - +session+: A hash of parameters to store in the session. This may be +nil+.
       # - +flash+: A hash of parameters to store in the flash. This may be +nil+.
       #
-      # You can also simulate POST, PATCH, PUT, DELETE, HEAD, and OPTIONS requests with
-      # +post+, +patch+, +put+, +delete+, +head+, and +options+.
+      # You can also simulate POST, PATCH, PUT, DELETE, and HEAD requests with
+      # +post+, +patch+, +put+, +delete+, and +head+.
       #
       # Note that the request method is not verified. The different methods are
       # available to make the tests more expressive.

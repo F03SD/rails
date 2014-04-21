@@ -40,8 +40,32 @@ class PostgresqlUUIDTest < ActiveRecord::TestCase
     drop_table "uuid_data_type"
   end
 
+  def test_change_column_default
+    @connection.add_column :uuid_data_type, :thingy, :uuid, null: false, default: "uuid_generate_v1()"
+    UUIDType.reset_column_information
+    column = UUIDType.columns.find { |c| c.name == 'thingy' }
+    assert_equal "uuid_generate_v1()", column.default_function
+    
+    @connection.change_column :uuid_data_type, :thingy, :uuid, null: false, default: "uuid_generate_v4()"
+    
+    UUIDType.reset_column_information
+    column = UUIDType.columns.find { |c| c.name == 'thingy' }
+    assert_equal "uuid_generate_v4()", column.default_function
+  end
+
   def test_data_type_of_uuid_types
-    assert_equal :uuid, UUIDType.columns_hash["guid"].type
+    column = UUIDType.columns_hash["guid"]
+    assert_equal :uuid, column.type
+    assert_equal "uuid", column.sql_type
+    assert_not column.number?
+    assert_not column.text?
+    assert_not column.binary?
+    assert_not column.array
+  end
+
+  def test_treat_blank_uuid_as_nil
+    UUIDType.create! guid: ''
+    assert_equal(nil, UUIDType.last.guid)
   end
 
   def test_uuid_formats

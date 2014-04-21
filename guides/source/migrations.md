@@ -18,9 +18,10 @@ After reading this guide, you will know:
 Migration Overview
 ------------------
 
-Migrations are a convenient way to alter your database schema over time in a
-consistent and easy way. They use a Ruby DSL so that you don't have to write
-SQL by hand, allowing your schema and changes to be database independent.
+Migrations are a convenient way to
+[alter your database schema over time](http://en.wikipedia.org/wiki/Schema_migration)
+in a consistent and easy way. They use a Ruby DSL so that you don't have to
+write SQL by hand, allowing your schema and changes to be database independent.
 
 You can think of each migration as being a new 'version' of the database. A
 schema starts off with nothing in it, and each migration modifies it to add or
@@ -494,6 +495,7 @@ class ExampleMigration < ActiveRecord::Migration
     add_column :users, :home_page_url, :string
     rename_column :users, :email, :email_address
   end
+end
 ```
 
 Using `reversible` will ensure that the instructions are executed in the

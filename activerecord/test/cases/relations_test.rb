@@ -14,6 +14,7 @@ require 'models/car'
 require 'models/engine'
 require 'models/tyre'
 require 'models/minivan'
+require 'models/aircraft'
 
 
 class RelationTest < ActiveRecord::TestCase
@@ -365,6 +366,16 @@ class RelationTest < ActiveRecord::TestCase
     assert_equal({ 'salary' => 100_000 }, Developer.none.where(salary: 100_000).where_values_hash)
   end
 
+
+  def test_null_relation_count
+    ac = Aircraft.new
+    assert_equal Hash.new, ac.engines.group(:id).count
+    assert_equal        0, ac.engines.count
+    ac.save
+    assert_equal Hash.new, ac.engines.group(:id).count
+    assert_equal        0, ac.engines.count
+  end
+
   def test_joins_with_nil_argument
     assert_nothing_raised { DependentFirm.joins(nil).first }
   end
@@ -571,6 +582,12 @@ class RelationTest < ActiveRecord::TestCase
     }.first
     actual = Post.eager_load(:last_comment).order('comments.id DESC').to_sql
     assert_equal expected, actual
+  end
+
+  def test_to_sql_on_scoped_proxy
+    auth = Author.first
+    Post.where("1=1").written_by(auth)
+    assert_not auth.posts.to_sql.include?("1=1")
   end
 
   def test_loading_with_one_association_with_non_preload
@@ -818,6 +835,16 @@ class RelationTest < ActiveRecord::TestCase
     assert_raises(ActiveRecord::ActiveRecordError) { Author.limit(10).delete_all }
   end
 
+  def test_select_with_aggregates
+    posts = Post.select(:title, :body)
+
+    assert_equal 11, posts.count(:all)
+    assert_equal 11, posts.size
+    assert posts.any?
+    assert posts.many?
+    assert_not posts.empty?
+  end
+
   def test_select_takes_a_variable_list_of_args
     david = developers(:david)
 
@@ -846,6 +873,17 @@ class RelationTest < ActiveRecord::TestCase
 
     assert_equal 1, posts.where('comments_count > 1').count
     assert_equal 9, posts.where(:comments_count => 0).count
+  end
+
+  def test_count_on_association_relation
+    author = Author.last
+    another_author = Author.first
+    posts = Post.where(author_id: author.id)
+
+    assert_equal author.posts.where(author_id: author.id).size, posts.count
+
+    assert_equal 0, author.posts.where(author_id: another_author.id).size
+    assert author.posts.where(author_id: another_author.id).empty?
   end
 
   def test_count_with_distinct
@@ -1416,6 +1454,18 @@ class RelationTest < ActiveRecord::TestCase
 
     scope = Post.reorder('foo(comments.body)')
     assert_equal [], scope.references_values
+  end
+
+  def test_order_with_reorder_nil_removes_the_order
+    relation = Post.order(:title).reorder(nil)
+
+    assert_nil relation.order_values.first
+  end
+
+  def test_reverse_order_with_reorder_nil_removes_the_order
+    relation = Post.order(:title).reverse_order.reorder(nil)
+
+    assert_nil relation.order_values.first
   end
 
   def test_presence

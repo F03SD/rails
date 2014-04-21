@@ -35,7 +35,7 @@ module ActiveRecord
   #
   # === One-to-one Example
   #
-  #   class Post
+  #   class Post < ActiveRecord::Base
   #     has_one :author, autosave: true
   #   end
   #
@@ -76,7 +76,7 @@ module ActiveRecord
   #
   # When <tt>:autosave</tt> is not declared new children are saved when their parent is saved:
   #
-  #   class Post
+  #   class Post < ActiveRecord::Base
   #     has_many :comments # :autosave option is not declared
   #   end
   #
@@ -95,20 +95,23 @@ module ActiveRecord
   # When <tt>:autosave</tt> is true all children are saved, no matter whether they
   # are new records or not:
   #
-  #   class Post
+  #   class Post < ActiveRecord::Base
   #     has_many :comments, autosave: true
   #   end
   #
   #   post = Post.create(title: 'ruby rocks')
   #   post.comments.create(body: 'hello world')
   #   post.comments[0].body = 'hi everyone'
-  #   post.save # => saves both post and comment, with 'hi everyone' as body
+  #   post.comments.build(body: "good morning.")
+  #   post.title += "!"
+  #   post.save # => saves both post and comments.
   #
   # Destroying one of the associated models as part of the parent's save action
   # is as simple as marking it for destruction:
   #
-  #   post.comments.last.mark_for_destruction
-  #   post.comments.last.marked_for_destruction? # => true
+  #   post.comments # => [#<Comment id: 1, ...>, #<Comment id: 2, ...]>
+  #   post.comments[1].mark_for_destruction
+  #   post.comments[1].marked_for_destruction? # => true
   #   post.comments.length # => 2
   #
   # Note that the model is _not_ yet removed from the database:
@@ -377,16 +380,15 @@ module ActiveRecord
       def save_has_one_association(reflection)
         association = association_instance_get(reflection.name)
         record      = association && association.load_target
-
         if record && !record.destroyed?
           autosave = reflection.options[:autosave]
 
           if autosave && record.marked_for_destruction?
             record.destroy
-          elsif autosave != false
+          else
             key = reflection.options[:primary_key] ? send(reflection.options[:primary_key]) : id
+            if autosave != false && (autosave || new_record? || record_changed?(reflection, record, key))
 
-            if (autosave && record.changed_for_autosave?) || new_record? || record_changed?(reflection, record, key)
               unless reflection.through_reflection
                 record[reflection.foreign_key] = key
               end
